@@ -1,0 +1,73 @@
+<?php
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require 'src/Exception.php';
+require 'src/PHPMailer.php';
+require 'src/SMTP.php';
+
+
+function sendMail($emailObj) {
+
+    $ret_message ="";
+        $mail = new PHPMailer();
+        $smtp_set = parse_ini_file($_SERVER["DOCUMENT_ROOT"].'/app.ini');
+
+        //$mail->SMTPDebug = 3;                                   // Enable verbose debug output
+
+        $mail->isSMTP();                                         // Set mailer to use SMTP
+        $mail->Host = $smtp_set['Host'];                         // Specify main and backup SMTP servers
+        $mail->SMTPAuth = true;                                  // Enable SMTP authentication
+        $mail->Username = $smtp_set['Username'];                 // SMTP username
+        $mail->Password = $smtp_set['Password'];                           // SMTP password
+
+        $mail->SMTPAutoTLS = false;
+        $mail->SMTPSecure = $smtp_set['Security'];                              // false | 'tls'  | 'ssl'
+        $mail->Port = $smtp_set['Port'];                                    // TCP port to connect to no security 25 / ssl 465  /  tls 587
+
+        $mail->isHTML(true);                                  // Set email format to HTML
+        $mail->WordWrap = 50;                                 // Set word wrap to 50 characters
+
+        $mail->From = $smtp_set['FromEmail'];
+        $mail->FromName = $emailObj->Name;
+        $mail->addReplyTo($emailObj->Replyto);
+
+         
+
+        $mail->addAddress($emailObj->Address);     // Add a recipient
+        
+ 
+        if (isset($emailObj->CC) && ($emailObj->CC != ''))
+        {
+            $mail->addCC($emailObj->CC);
+        }
+        if (isset($emailObj->BCC) && ($emailObj->BCC != ''))
+        {
+            $mail->addBCC($emailObj->BCC);
+        }
+        
+        // $mail->Subject = $emailObj->Subject;
+        $mail->Body    = $emailObj->Body;
+        $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
+
+
+        // //$mail->addAttachment('/var/tmp/file.tar.gz');         // Add attachments
+        // //$mail->addAttachment('/tmp/image.jpg', 'new.jpg');    // Optional name
+        if(!$mail->send()) {
+            $ret_message .= 'Message could not be sent.';
+            $ret_message .= 'Mailer Error: ' . $mail->ErrorInfo;
+        }
+         else {
+            $ret_message .=$emailObj->Address;
+         }
+
+     echo $ret_message;
+    
+
+}
+
+
+
+
+?>
